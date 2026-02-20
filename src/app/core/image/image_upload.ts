@@ -1,11 +1,13 @@
-import {gaussianBlur, ImageBuffer} from '../../math/gaussian_blur';
+import { ImageBuffer } from '../../math/gaussian_blur';
 
-async function handleImageUpload(file: File): Promise<void> {
+export async function fileToImageBuffer(file: File): Promise<{ buffer: ImageBuffer, imgData: ImageData }> {
   const img = await loadImage(file);
 
   const canvas = document.createElement('canvas');
   const ctx = canvas.getContext('2d');
-  if (!ctx) return;
+  if (!ctx) {
+    throw new Error('Canvas 2D context not available');
+  }
 
   canvas.width = img.width;
   canvas.height = img.height;
@@ -13,36 +15,32 @@ async function handleImageUpload(file: File): Promise<void> {
 
   const imgData = ctx.getImageData(0, 0, img.width, img.height);
 
-  const srcBuffer: ImageBuffer = {
-    width: imgData.width,
-    height: imgData.height,
-    data: imgData.data,
-    channels: 4
+  return {
+    buffer: {
+      width: imgData.width,
+      height: imgData.height,
+      data: imgData.data,
+      channels: 4
+    },
+    imgData
   };
-
-  console.time("Blur Process");
-
-  const blurredBuffer = gaussianBlur(srcBuffer, 15, 15, 0, 0);
-
-  console.timeEnd("Blur Process");
-
-  const finalImageData = new ImageData(
-    blurredBuffer.data as ImageDataArray,
-    blurredBuffer.width,
-    blurredBuffer.height
-  );
-
-  const outputCanvas = document.getElementById('outputCanvas') as HTMLCanvasElement;
-  outputCanvas.width = blurredBuffer.width;
-  outputCanvas.height = blurredBuffer.height;
-  outputCanvas.getContext('2d')?.putImageData(finalImageData, 0, 0);
 }
 
-function loadImage(file: File): Promise<HTMLImageElement> {
+export function loadImage(file: File): Promise<HTMLImageElement> {
   return new Promise((resolve, reject) => {
     const img = new Image();
-    img.onload = () => resolve(img);
-    img.onerror = reject;
-    img.src = URL.createObjectURL(file);
+    const objectUrl = URL.createObjectURL(file);
+    
+    img.onload = () => {
+      URL.revokeObjectURL(objectUrl);
+      resolve(img);
+    };
+    
+    img.onerror = (err) => {
+      URL.revokeObjectURL(objectUrl);
+      reject(err);
+    };
+    
+    img.src = objectUrl;
   });
 }

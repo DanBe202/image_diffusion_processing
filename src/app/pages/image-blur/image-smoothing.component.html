@@ -1,55 +1,28 @@
-<div class="diffusion-container">
-
-  <div class="controls-panel">
-    <div class="file-group">
-      <label class="btn-upload">
-        Upload Image
-        <input type="file" accept="image/*" (change)="onFileSelected($event)" hidden>
-      </label>
-    </div>
-
-    <div class="sliders-group">
-      <div class="slider-row">
-        <label>Diffusion ($D$): {{ diffusionD() }}</label>
-        <input type="range" min="0" max="10" step="0.1"
-               [ngModel]="diffusionD()" (ngModelChange)="diffusionD.set($event)">
-      </div>
-      <div class="slider-row">
-        <label>Time ($\Delta t$): {{ timeStep() }}</label>
-        <input type="range" min="0" max="20" step="0.5"
-               [ngModel]="timeStep()" (ngModelChange)="timeStep.set($event)">
-      </div>
-    </div>
-
-    <div class="action-group">
-      <button class="btn-run"
-              (click)="onRunDiffusion()"
-              [disabled]="isProcessing()">
-        {{ isProcessing() ? 'Processing...' : 'Run Simulation' }}
-      </button>
-    </div>
-  </div>
+<section class="container">
+  <app-image-controls
+    [(diffusionD)]="diffusionD"
+    [(timeStep)]="timeStep"
+    [fileName]="fileName()"
+    [isProcessing]="isProcessing()"
+    (fileSelected)="onFileSelected($event)"
+    (runSimulation)="onRunDiffusion()">
+  </app-image-controls>
 
   <div class="canvas-grid">
     <div class="canvas-card">
-      <h3>Original ($t=0$)</h3>
+      <h3>Original (t = 0)</h3>
       <div class="canvas-wrapper">
-        <app-canvas #originalCanvas
-                    [preferredWidth]="canvasWidth"
-                    [height]="canvasHeight">
+        <app-canvas #originalCanvas>
         </app-canvas>
       </div>
     </div>
 
     <div class="canvas-card">
-      <h3>Diffused ($t={{ timeStep() }}$)</h3>
+      <h3>Diffused (t = {{ timeStep().toFixed(1) }})</h3>
       <div class="canvas-wrapper">
-        <app-canvas #outputCanvas
-                    [preferredWidth]="canvasWidth"
-                    [height]="canvasHeight">
+        <app-canvas #outputCanvas>
         </app-canvas>
       </div>
     </div>
   </div>
-
-</div>
+</section>

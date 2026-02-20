@@ -1,0 +1,50 @@
+<div class="controls-panel">
+  <div class="file-upload">
+    <button mat-button class="mat-mdc-unelevated-button mdc-button--filled" 
+            (click)="myInput.click()" 
+            [disabled]="isProcessing()">
+      Upload Image
+    </button>
+    <div class="file-name-wrapper">
+      <input #myInput
+             accept="image/*"
+             type="file"
+             hidden
+             (change)="onFileSelected($event)"/>
+      <p class="file-name-text">{{ fileName() }}</p>
+    </div>
+  </div>
+
+  <div class="sliders-group">
+    <div class="slider-row">
+      <div class="slider-header">
+        <label for="diffusion-slider">Diffusion:</label>
+        <span>{{ diffusionD().toFixed(1) }}</span>
+      </div>
+      <mat-slider [max]="20" [min]="0" [step]="0.1">
+        <input id="diffusion-slider" matSliderThumb
+               [ngModel]="diffusionD()"
+               (ngModelChange)="diffusionD.set($event)">
+      </mat-slider>
+    </div>
+    <div class="slider-row">
+      <div class="slider-header">
+        <label for="time-slider">Time (delta t):</label>
+        <span>{{ timeStep().toFixed(1) }}</span>
+      </div>
+      <mat-slider [max]="20" [min]="0" [step]="0.1">
+        <input id="time-slider" matSliderThumb
+               [ngModel]="timeStep()"
+               (ngModelChange)="timeStep.set($event)">
+      </mat-slider>
+    </div>
+  </div>
+
+  <div class="action-group">
+    <button mat-button class="btn-run mat-mdc-unelevated-button mdc-button--filled"
+            (click)="runSimulation.emit()"
+            [disabled]="isProcessing()">
+      {{ isProcessing() ? 'Processing...' : 'Run Simulation' }}
+    </button>
+  </div>
+</div>

@@ -1,17 +1,15 @@
-import {ChangeDetectionStrategy, Component, signal, computed, ViewChild, viewChild} from '@angular/core';
-import { FormsModule } from '@angular/forms';
-import { gaussianBlur, ImageBuffer } from '../../math/gaussian_blur';
-import {CanvasComponent} from './components/canvas/canvas';
-
-class ImageCanvasComponent {
-}
+import {ChangeDetectionStrategy, Component, computed, signal, viewChild} from '@angular/core';
+import {gaussianBlur, ImageBuffer} from '../../math/gaussian_blur';
+import {fileToImageBuffer} from '../../core/image/image_upload';
+import {CanvasComponent} from './components/canvas/canvas.component';
+import {ImageControlsComponent} from './components/image-controls/image-controls.component';
 
 @Component({
   selector: 'app-image-blur',
   standalone: true,
   imports: [
-    FormsModule,
-    CanvasComponent
+    CanvasComponent,
+    ImageControlsComponent
   ],
   templateUrl: './image-smoothing.component.html',
   styleUrl: './image-smoothing.component.scss',
@@ -26,11 +24,12 @@ export class ImageSmoothingComponent {
     const val = Math.sqrt(2 * this.diffusionD() * this.timeStep());
     return parseFloat(val.toFixed(2));
   });
+  protected fileName = signal<string>('No file selected');
 
   private originalBuffer: ImageBuffer | null = null;
 
-  private originalCanvas = viewChild.required<ImageCanvasComponent>('originalCanvas');
-  private outputCanvas = viewChild.required<ImageCanvasComponent>('outputCanvas');
+  private originalCanvas = viewChild.required<CanvasComponent>('originalCanvas');
+  private outputCanvas = viewChild.required<CanvasComponent>('outputCanvas');
 
   async onFileSelected(event: Event): Promise<void> {
     const input = event.target as HTMLInputElement;
@@ -40,26 +39,20 @@ export class ImageSmoothingComponent {
 
     try {
       const file = input.files[0];
-      const img = await this.loadImage(file);
+      this.fileName.set(file.name);
 
-      const tempCanvas = document.createElement('canvas');
-      tempCanvas.width = img.width;
-      tempCanvas.height = img.height;
-      const ctx = tempCanvas.getContext('2d')!;
-      ctx.drawImage(img, 0, 0);
+      this.originalCanvas().clear();
+      this.outputCanvas().clear();
 
-      const imgData = ctx.getImageData(0, 0, img.width, img.height);
+      const { buffer, imgData } = await fileToImageBuffer(file);
+      this.originalBuffer = buffer;
 
-      this.originalBuffer = {
-        width: imgData.width,
-        height: imgData.height,
-        data: imgData.data,
-        channels: 4
-      };
+      this.outputCanvas().resizeCanvas(imgData.width, imgData.height);
 
-      await this.originalCanvas.putImageData(imgData, 0, 0);
+      await this.originalCanvas().putImageData(imgData, 0, 0);
       this.isProcessing.set(false);
     } catch (err) {
+      this.fileName.set('No file selected');
       console.error(err);
       this.isProcessing.set(false);
     }
@@ -68,6 +61,7 @@ export class ImageSmoothingComponent {
   onRunDiffusion() {
     if (!this.originalBuffer) return;
     this.isProcessing.set(true);
+    this.outputCanvas().clear();
 
     const sigma = this.predictedSigma();
     const safeSigma = sigma < 0.1 ? 0.1 : sigma;
@@ -76,26 +70,23 @@ export class ImageSmoothingComponent {
     if (k % 2 === 0) k++;
 
     setTimeout(async () => {
+      try {
       const blurred = gaussianBlur(this.originalBuffer!, k, k, safeSigma, safeSigma);
 
       const finalImageData = new ImageData(
-        blurred.data as any,
+        new Uint8ClampedArray(blurred.data),
         blurred.width,
         blurred.height
       );
 
-      await this.outputCanvas.putImageData(finalImageData, 0, 0);
+      await this.outputCanvas().putImageData(finalImageData, 0, 0);
 
       this.isProcessing.set(false);
+    } catch (err) {
+      console.error(err);
+      this.isProcessing.set(false);
+    }
     }, 50);
   }
 
-  private loadImage(file: File): Promise<HTMLImageElement> {
-    return new Promise((resolve, reject) => {
-      const img = new Image();
-      img.onload = () => resolve(img);
-      img.onerror = reject;
-      img.src = URL.createObjectURL(file);
-    });
-  }
 }
