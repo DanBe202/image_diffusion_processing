@@ -1,0 +1,28 @@
+<section class="container">
+  <app-image-controls
+    [(diffusionD)]="diffusionD"
+    [(timeStep)]="timeStep"
+    [fileName]="fileName()"
+    [isProcessing]="isProcessing()"
+    (fileSelected)="onFileSelected($event)"
+    (runSimulation)="onRunDiffusion()">
+  </app-image-controls>
+
+  <div class="canvas-grid">
+    <div class="canvas-card">
+      <h3>Original (t = 0)</h3>
+      <div class="canvas-wrapper">
+        <app-canvas #originalCanvas>
+        </app-canvas>
+      </div>
+    </div>
+
+    <div class="canvas-card">
+      <h3>Diffused (t = {{ timeStep().toFixed(1) }})</h3>
+      <div class="canvas-wrapper">
+        <app-canvas #outputCanvas>
+        </app-canvas>
+      </div>
+    </div>
+  </div>
+</section>
