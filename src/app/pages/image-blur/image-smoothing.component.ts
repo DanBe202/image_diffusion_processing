@@ -1,5 +1,5 @@
 import {ChangeDetectionStrategy, Component, computed, signal, viewChild} from '@angular/core';
-import {gaussianBlur, ImageBuffer} from '../../math/gaussian_blur';
+import {gaussianBlurDiffusion, ImageBuffer} from '../../math/gaussian_blur';
 import {fileToImageBuffer} from '../../core/image/image_upload';
 import {CanvasComponent} from './components/canvas/canvas.component';
 import {ImageControlsComponent} from './components/image-controls/image-controls.component';
@@ -66,27 +66,23 @@ export class ImageSmoothingComponent {
     const sigma = this.predictedSigma();
     const safeSigma = sigma < 0.1 ? 0.1 : sigma;
 
-    let k = Math.ceil(6 * safeSigma);
-    if (k % 2 === 0) k++;
-
     setTimeout(async () => {
       try {
-      const blurred = gaussianBlur(this.originalBuffer!, k, k, safeSigma, safeSigma);
+        const blurred = gaussianBlurDiffusion(this.originalBuffer!, safeSigma);
 
-      const finalImageData = new ImageData(
-        new Uint8ClampedArray(blurred.data),
-        blurred.width,
-        blurred.height
-      );
+        const finalImageData = new ImageData(
+          new Uint8ClampedArray(blurred.data),
+          blurred.width,
+          blurred.height
+        );
 
-      await this.outputCanvas().putImageData(finalImageData, 0, 0);
+        await this.outputCanvas().putImageData(finalImageData, 0, 0);
 
-      this.isProcessing.set(false);
-    } catch (err) {
-      console.error(err);
-      this.isProcessing.set(false);
-    }
+        this.isProcessing.set(false);
+      } catch (err) {
+        console.error(err);
+        this.isProcessing.set(false);
+      }
     }, 50);
   }
-
 }
