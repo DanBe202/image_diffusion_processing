@@ -12,17 +12,53 @@
     <div class="canvas-card">
       <h3>Original (t = 0)</h3>
       <div class="canvas-wrapper">
-        <app-canvas #originalCanvas>
-        </app-canvas>
+        <app-canvas #originalCanvas></app-canvas>
       </div>
     </div>
 
     <div class="canvas-card">
       <h3>Diffused (t = {{ timeStep().toFixed(1) }})</h3>
       <div class="canvas-wrapper">
-        <app-canvas #outputCanvas>
-        </app-canvas>
+        <app-canvas #outputCanvas></app-canvas>
       </div>
     </div>
   </div>
+
+  @if (benchmarkResults().length) {
+    <div class="benchmark-card">
+      <h3>Benchmark <span class="sigma-note">vs. Native Canvas blur (reference)</span></h3>
+      <table class="benchmark-table">
+        <thead>
+        <tr>
+          <th>σ</th>
+          <th>My algorithm</th>
+          <th>Reference</th>
+          <th>Speed</th>
+          <th>PSNR</th>
+          <th>SSIM</th>
+          <th>Quality</th>
+        </tr>
+        </thead>
+        <tbody>
+          @for (r of benchmarkResults(); track r.sigma) {
+            <tr>
+              <td>{{ r.sigma }}</td>
+              <td>{{ r.yourTimeMs }} ms</td>
+              <td>{{ r.refTimeMs }} ms</td>
+              <td [class]="r.yourTimeMs <= r.refTimeMs ? 'faster' : 'slower'">
+                {{ r.yourTimeMs <= r.refTimeMs ? 'Faster' : 'Slower' }}
+              </td>
+              <td>{{ r.psnr === (1/0) ? '∞' : r.psnr }} dB</td>
+              <td>{{ r.ssim }}</td>
+              <td>
+                <span class="quality-badge">
+                  {{ r.quality }}
+                </span>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
 </section>

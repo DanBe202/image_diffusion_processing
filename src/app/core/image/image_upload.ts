@@ -1,4 +1,4 @@
-import { ImageBuffer } from '../../math/gaussian_blur';
+import {ImageBuffer} from '../../math/diffusion_algorithm';
 
 export async function fileToImageBuffer(file: File): Promise<{ buffer: ImageBuffer, imgData: ImageData }> {
   const img = await loadImage(file);
@@ -30,17 +30,17 @@ export function loadImage(file: File): Promise<HTMLImageElement> {
   return new Promise((resolve, reject) => {
     const img = new Image();
     const objectUrl = URL.createObjectURL(file);
-    
+
     img.onload = () => {
       URL.revokeObjectURL(objectUrl);
       resolve(img);
     };
-    
+
     img.onerror = (err) => {
       URL.revokeObjectURL(objectUrl);
       reject(err);
     };
-    
+
     img.src = objectUrl;
   });
 }
